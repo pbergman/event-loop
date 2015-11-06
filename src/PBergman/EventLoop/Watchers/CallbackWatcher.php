@@ -13,18 +13,13 @@ namespace PBergman\EventLoop\Watchers;
 class CallbackWatcher extends AbstractWatcher
 {
     /**
-     * @inheritdoc
+     * dispatch event
      */
-    function __construct(callable $callback)
+    public function run()
     {
-        parent::__construct($callback);
-    }
-
-    /**
-     * @return mixed
-     */
-    function __invoke()
-    {
-        $this->run($this);
+        if ($this->isActive() && is_callable($this->callback)) {
+            $callabale = $this->callback;
+            $callabale($this);
+        }
     }
 }

@@ -21,7 +21,7 @@ class SignalDispatcher implements \Countable
      * @param int               $signal
      * @param WatcherInterface $watcher
      */
-    public static function add($signal, WatcherInterface $watcher)
+    public static function add($signal, SignalWatcher $watcher)
     {
         if (!isset(self::$signals[$signal])) {
             pcntl_signal($signal, __CLASS__  . '::call');
@@ -107,9 +107,9 @@ class SignalDispatcher implements \Countable
      */
     public static function call($signal)
     {
-        /** @var WatcherInterface $watcher */
+        /** @var SignalWatcher $watcher */
         foreach (self::$signals[$signal] as $watcher) {
-            $watcher->run($watcher, $signal);
+            $watcher->execute($signal);
         }
     }
 

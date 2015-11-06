@@ -22,7 +22,7 @@ abstract class AbstractTimer extends AbstractWatcher
      */
     protected function isValid()
     {
-        return (double) $this->getAlarm()->format('U.u') <= (double) $this->getNewDateTime()->format('U.u');
+        return $this->isActive() && (double) $this->getAlarm()->format('U.u') <= (double) $this->getNewDateTime()->format('U.u');
     }
 
     /**

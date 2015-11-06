@@ -78,7 +78,7 @@ class Loop implements \Countable
      */
     public function filter(callable $filter)
     {
-        foreach ($this->getQueueIterator() as $watcher) {
+        foreach ($this->getDequeuedWatcher() as $watcher) {
             if (false !== $filter($watcher)) {
                 $this->queue->enqueue($watcher);
             }
@@ -86,11 +86,42 @@ class Loop implements \Countable
     }
 
     /**
-     * a generator that loops once over the queue and return a watcher
+     * return (filterd) list of watchers
+     *
+     * @param   callable $filter
+     * @return  array
+     */
+    public function grep(callable $filter)
+    {
+        $ret = [];
+        foreach ($this->getWatcher() as $watcher) {
+            if (false !== $filter($watcher)) {
+                $ret[] = $watcher;
+            }
+        }
+        return $ret;
+    }
+
+    /**
+     * @return WatcherInterface|WatcherInterface[]
+     */
+    public function getWatcher()
+    {
+        // not using foreach and setting count because
+        // queue can change dynamically and we just
+        // want loop over current queue.
+        $c = $this->queue->count();
+        for ($i = 0; $i < $c; $i++) {
+            yield $this->queue[$i];
+        }
+    }
+
+    /**
+     * a generator that loops once over the dequeued and return a watcher
      *
      * @return WatcherInterface[]
      */
-    protected function getQueueIterator()
+    protected function getDequeuedWatcher()
     {
         $c = $this->queue->count();
         for ($i = 0; $i < $c; $i++) {
@@ -105,28 +136,23 @@ class Loop implements \Countable
      */
     public function run($limit = null)
     {
-        $active = [];
-        $this->iteration = 0;
-
         do {
             $start = microtime(true);
 
-            foreach ($this->getQueueIterator() as $watcher) {
-                if ($watcher->isActive()) {
-                    $active[$watcher->getHash()] = 1;
-                    $watcher();
-                    if ($watcher->isFinished()) {
-                        unset($active[$watcher->getHash()]);
-                    } else {
+            foreach ($this->getDequeuedWatcher() as $watcher) {
+
+                switch ($watcher->getState()) {
+                    case $watcher::STATE_ACTIVE:
+                        if ($watcher::STATE_FINISHED !== $watcher()) {
+                            $this->queue->enqueue($watcher);
+                        }
+                        break;
+                    case $watcher::STATE_STOPPED:
                         $this->queue->enqueue($watcher);
-                    }
-                    if (false === $watcher->isActive()) {
-                        $active[$watcher->getHash()] = 0;
-                    }
-                } else {
-                    $active[$watcher->getHash()] = 0;
+                        break;
                 }
             }
+
 
             if (0 > ($sleep = $this->min - (microtime(true) - $start) * 1000000)) {
                 $sleep = abs($sleep) % $this->min;
@@ -144,7 +170,22 @@ class Loop implements \Countable
                 break;
             }
 
-        } while (array_sum($active) > 0 && $this->stop === false);
+        } while ($this->hasActiveWatchers() && $this->stop === false);
+    }
+
+    /**
+     * check if we got active watchers
+     *
+     * @return bool
+     */
+    protected function hasActiveWatchers()
+    {
+        foreach ($this->getWatcher() as $watcher) {
+            if ($watcher->isActive()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

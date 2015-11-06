@@ -10,7 +10,7 @@ namespace PBergman\EventLoop\Watchers;
  *
  * @package PBergman\EventLoop\Watchers
  */
-class SignalWatcher extends AbstractTimer
+class SignalWatcher extends AbstractWatcher
 {
     /**
      * @param int      $signal
@@ -24,10 +24,20 @@ class SignalWatcher extends AbstractTimer
 
 
     /**
-     * @inheritdoc
+     * dispatch event
      */
-    function __invoke()
+    public function run()
     {
-        SignalDispatcher::dispatch();
+        if ($this->isActive()) {
+            SignalDispatcher::dispatch();
+        }
+    }
+
+    public function execute($signal)
+    {
+        if ($this->callback) {
+            $callabale = $this->callback;
+            $callabale($this, $signal);
+        }
     }
 }

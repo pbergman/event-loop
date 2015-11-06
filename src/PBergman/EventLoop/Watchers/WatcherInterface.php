@@ -14,8 +14,15 @@ use PBergman\EventLoop\Loop;
  */
 interface WatcherInterface
 {
+    const STATE_ACTIVE = 1;
+    const STATE_STOPPED = 2;
+    const STATE_FINISHED = 4;
+
     /**
-     * This will be called every iteration and should hold the main logic
+     * This will be called every iteration and should hold the
+     * main logic and return the current state,
+     *
+     * @return bool
      */
     public function __invoke();
 
@@ -28,6 +35,11 @@ interface WatcherInterface
      * @return bool
      */
     public function isFinished();
+
+    /**
+     * @return bool
+     */
+    public function isStopped();
 
     /**
      * this will stop the current watcher from being called
@@ -74,10 +86,9 @@ interface WatcherInterface
     public function getHash();
 
     /**
-     * run the registered callback
+     * get current state of watcher should return on of STATE_* constants
      *
-     * @param       ...$args
-     * @internal
+     * @return mixed
      */
-    public function run(...$args);
+    public function getState();
 }

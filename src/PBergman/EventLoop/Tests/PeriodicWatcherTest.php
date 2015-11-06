@@ -4,6 +4,7 @@
  * @copyright Philip Bergman
  */
 namespace PBergman\EventLoop\Tests;
+
 use PBergman\EventLoop\Watchers\PeriodicWatcher;
 
 /**

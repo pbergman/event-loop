@@ -26,6 +26,9 @@ class IntervalWatcher extends AbstractTimer
         parent::__construct($callback);
     }
 
+    /**
+     * Update current alarm
+     */
     protected function updateAlarm()
     {
         $this->setAlarm(
@@ -34,13 +37,14 @@ class IntervalWatcher extends AbstractTimer
     }
 
     /**
-     * @return mixed
+     * dispatch event
      */
-    function __invoke()
+    public function run()
     {
-        if ($this->isValid()) {
+        if ($this->isValid() && is_callable($this->callback)) {
             $this->updateAlarm();
-            $this->run($this);
+            $callabale = $this->callback;
+            $callabale($this);
         }
     }
 }

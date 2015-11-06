@@ -14,14 +14,12 @@ use PBergman\EventLoop\Loop;
  */
 abstract class AbstractWatcher implements WatcherInterface
 {
-    /** @var bool  */
-    protected $finished = false;
-    /** @var bool */
-    protected $isActive = true;
     /** @var callable */
     protected $callback;
     /** @var Loop */
     protected $loop;
+    /** @var int */
+    protected $state = self::STATE_ACTIVE;
 
     /**
      * @inheritdoc
@@ -36,7 +34,7 @@ abstract class AbstractWatcher implements WatcherInterface
      */
     public function isActive()
     {
-        return $this->isActive;
+        return $this->state === self::STATE_ACTIVE;
     }
 
     /**
@@ -44,7 +42,15 @@ abstract class AbstractWatcher implements WatcherInterface
      */
     public function isFinished()
     {
-        return $this->finished;
+        return $this->state === self::STATE_FINISHED;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStopped()
+    {
+        return $this->state === self::STATE_STOPPED;
     }
 
     /**
@@ -55,8 +61,7 @@ abstract class AbstractWatcher implements WatcherInterface
      */
     public function finished()
     {
-        $this->finished = true;
-        $this->isActive = false;
+        $this->state = self::STATE_FINISHED;
         return $this;
     }
 
@@ -69,7 +74,7 @@ abstract class AbstractWatcher implements WatcherInterface
      */
     public function stop()
     {
-        $this->isActive = false;
+        $this->state = self::STATE_STOPPED;
         return $this;
     }
 
@@ -80,7 +85,7 @@ abstract class AbstractWatcher implements WatcherInterface
      */
     public function start()
     {
-        $this->isActive = true;
+        $this->state = self::STATE_ACTIVE;
         return $this;
     }
 
@@ -111,15 +116,27 @@ abstract class AbstractWatcher implements WatcherInterface
     }
 
     /**
-     * run the registered callback
+     * get current state of watcher should return on of STATE_* constants
      *
-     * @param ...$args
+     * @return mixed
      */
-    public function run(...$args)
+    public function getState()
     {
-        if (is_callable($this->callback)) {
-            $callabale = $this->callback;
-            $callabale(...$args);
-        }
+        return $this->state;
     }
+
+    /**
+     * @return int
+     */
+    public function __invoke()
+    {
+        $this->run();
+        return $this->state;
+    }
+
+    /**
+     * dispatch event
+     */
+    abstract protected function run();
+
 }

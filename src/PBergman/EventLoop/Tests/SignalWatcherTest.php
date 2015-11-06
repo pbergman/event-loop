@@ -20,7 +20,7 @@ class SignalWatcherTest extends \PHPUnit_Framework_TestCase
         $bool = false;
         $watcher = new SignalWatcher(SIGUSR1, function($w) use(&$bool) {
             $this->assertInstanceOf('PBergman\EventLoop\Watchers\SignalWatcher', $w);
-            $this->assertInstanceOf('PBergman\EventLoop\Watchers\AbstractTimer', $w);
+            $this->assertInstanceOf('PBergman\EventLoop\Watchers\AbstractWatcher', $w);
             $bool = true;
         });
         $this->assertFalse($bool);

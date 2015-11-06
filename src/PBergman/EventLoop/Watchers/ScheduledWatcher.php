@@ -23,12 +23,13 @@ class ScheduledWatcher extends AbstractTimer
     }
 
     /**
-     * @inheritdoc
+     * dispatch event
      */
-    function __invoke()
+    public function run()
     {
-        if ($this->isValid()) {
-            $this->run($this);
+        if ($this->isValid() && is_callable($this->callback)) {
+            $callabale = $this->callback;
+            $callabale($this);
         }
     }
 }

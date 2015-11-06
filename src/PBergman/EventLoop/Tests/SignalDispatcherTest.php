@@ -4,6 +4,7 @@
  * @copyright Philip Bergman
  */
 namespace PBergman\EventLoop\Tests;
+
 use PBergman\EventLoop\Watchers\CallbackWatcher;
 use PBergman\EventLoop\Watchers\SignalDispatcher;
 use PBergman\EventLoop\Watchers\SignalWatcher;
@@ -46,9 +47,7 @@ class SignalDispatcherTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($dispatcher::has(SIGCHLD));
         $this->assertSame(2, count($dispatcher));
         $dispatcher::set([
-            SIGCHLD => [new CallbackWatcher(function($w) use(&$ret) {
-                $ret++;
-            })]
+            SIGCHLD => [new SignalWatcher(SIGCHLD, function() use(&$ret) { $ret++; })]
         ]);
         $this->assertSame(1, count($dispatcher));
     }

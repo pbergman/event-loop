@@ -15,8 +15,8 @@ it will be enqueued again and if marked as stopped it not be called again until 
 
 ####add(WatcherInterface $watcher)
 
-This method can be used to register you custom watcher. A custom watcher should implement WatcherInterface or 
-extend AbstractWatcher.
+This method can be used to register you custom watcher (a custom watcher should implement WatcherInterface or
+extend AbstractWatcher) or a stopped watcher that can be activated later in the loop.
 
 ####peekBottom()
 
@@ -29,6 +29,14 @@ Get the last registered watcher.
 ####filter(callable $filter)
 
 Do filter over the registered watchers (similar as array filter).
+
+####grep(callable $filter)
+
+do grep filter on watcher and return a array that match that criteria
+
+####getWatcher()
+
+this will return a iterator (generator) that returns the next watcher every call
 
 ####run(<int> $limit = null)
 

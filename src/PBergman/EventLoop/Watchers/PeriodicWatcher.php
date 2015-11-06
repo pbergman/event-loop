@@ -48,13 +48,14 @@ class PeriodicWatcher extends AbstractTimer
     }
 
     /**
-     * @return mixed
+     * dispatch event
      */
-    function __invoke()
+    public function run()
     {
-        if ($this->isValid()) {
+        if ($this->isValid() && is_callable($this->callback)) {
             $this->updateAlarm();
-            $this->run($this);
+            $callabale = $this->callback;
+            $callabale($this);
         }
     }
 }
