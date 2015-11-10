@@ -11,6 +11,7 @@ use PBergman\EventLoop\Watchers\IntervalWatcher;
 use PBergman\EventLoop\Watchers\PeriodicWatcher;
 use PBergman\EventLoop\Watchers\ScheduledWatcher;
 use PBergman\EventLoop\Watchers\SignalWatcher;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Loop
@@ -27,7 +28,8 @@ class Loop implements \Countable
     protected $min = 200000;
     /** @var int  */
     protected $ticks = 0;
-
+    /** @var LoggerInterface  */
+    protected $logger;
     /**
      * @inheritdoc
      */
@@ -299,5 +301,22 @@ class Loop implements \Countable
         $this->queue = new $this->queue();
         $this->stop = false;
         $this->min = 200000;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
+        return $this;
     }
 }

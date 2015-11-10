@@ -135,6 +135,19 @@ abstract class AbstractWatcher implements WatcherInterface
     }
 
     /**
+     * @return null|\Psr\Log\LoggerInterface
+     */
+    public function getLogger()
+    {
+        if ($this->getLoop() instanceof Loop) {
+            return $this->getLoop()->getLogger();
+        } else {
+            return null;
+        }
+
+    }
+
+    /**
      * dispatch event
      */
     abstract protected function run();

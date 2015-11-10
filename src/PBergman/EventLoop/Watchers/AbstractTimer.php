@@ -57,7 +57,6 @@ abstract class AbstractTimer extends AbstractWatcher
      */
     public static function getNewDateTime($offset = 0)
     {
-        $time = microtime(true) + $offset;
-        return new \DateTime(date(sprintf('Y-m-d H:i:s.%06d', ($time - floor($time)) * 1000000), $time));
+        return \DateTime::createFromFormat('U.u', sprintf('%.6F', microtime(true) + $offset));
     }
 }

@@ -17,6 +17,8 @@ class AbstractWatcherTest extends \PHPUnit_Framework_TestCase
 {
     function testAbstractWatcher()
     {
+        $logger = $this->getMock('Psr\Log\LoggerInterface');
+
         $stub = $this->getMockForAbstractClass(AbstractWatcher::class, [function(){}]);
         $this->assertFalse($stub->isFinished());
         $this->assertTrue($stub->isActive());
@@ -30,9 +32,11 @@ class AbstractWatcherTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($stub->isFinished());
         $this->assertFalse($stub->isActive());
         $this->assertSame(spl_object_hash($stub), $stub->getHash());
+        $this->assertNull($stub->getLogger());
         $loop = new Loop();
+        $loop->setLogger($logger);
         $stub->setLoop($loop);
         $this->assertSame($loop, $stub->getLoop());
-
+        $this->assertSame($logger, $stub->getLogger());
     }
 }
