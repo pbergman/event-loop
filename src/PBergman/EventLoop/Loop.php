@@ -274,13 +274,15 @@ class Loop implements \Countable
     /**
      * add a signal watcher, every tick it will check for pending signals
      *
-     * @param   int      $signal
-     * @param   callable $callback
-     * @return  $this
+     * @param   int         $signal
+     * @param   callable    $callback
+     * @param   int         $priority
+     *
+     * @return $this
      */
-    public function addSignal($signal, callable $callback)
+    public function addSignal($signal, callable $callback, $priority = 0)
     {
-        $this->add(new SignalWatcher($signal, $callback));
+        $this->add(new SignalWatcher($signal, $priority, $callback));
         return $this;
     }
 

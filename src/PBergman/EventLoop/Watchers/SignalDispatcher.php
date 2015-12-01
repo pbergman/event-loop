@@ -13,21 +13,43 @@ namespace PBergman\EventLoop\Watchers;
 class SignalDispatcher implements \Countable
 {
     /** @var array  */
-    protected static $signals;
+    protected static $watchers;
+    /** @var bool  */
+    protected static $sorted = false;
 
-    /**
+     /**
      * add signal to listeners
      *
-     * @param int               $signal
-     * @param WatcherInterface $watcher
+     * @param SignalWatcher $watcher
      */
-    public static function add($signal, SignalWatcher $watcher)
+    public static function add(SignalWatcher $watcher)
     {
-        if (!isset(self::$signals[$signal])) {
-            pcntl_signal($signal, __CLASS__  . '::call');
+        pcntl_signal($watcher->getSignal(), __CLASS__  . '::call');
+        self::$watchers[$watcher->getSignal()][] = $watcher;
+        self::$sorted = false;
+    }
+
+    /**
+     * @param   int|null $signal
+     * @return  \Generator|SignalWatcher[]
+     */
+    protected static function getWatchers($signal)
+    {
+        if (false === self::$sorted) {
+            foreach (self::$watchers as $signal => $watcher) {
+                usort(self::$watchers[$signal], function(SignalWatcher $a, SignalWatcher $b){
+                    if ($a->getPriority() == $b->getPriority()) {
+                        return 0;
+                    }
+                    return ($a->getPriority() > $b->getPriority()) ? -1 : 1;
+                });
+            }
+            self::$sorted = true;
         }
 
-        self::$signals[$signal][] = $watcher;
+        foreach (self::$watchers[$signal] as $i => $watcher) {
+            yield $i => $watcher;
+        }
     }
 
     /**
@@ -35,10 +57,8 @@ class SignalDispatcher implements \Countable
      */
     public static function clear()
     {
-        if (!empty(self::$signals)) {
-            foreach(array_keys(self::$signals) as $signal) {
-                self::remove($signal);
-            }
+        foreach(array_keys(self::$watchers) as $signal) {
+            self::remove($signal);
         }
     }
 
@@ -49,21 +69,34 @@ class SignalDispatcher implements \Countable
      */
     public static function remove($signal)
     {
-        if (isset(self::$signals[$signal])) {
-            pcntl_signal($signal, SIG_DFL);
-            unset(self::$signals[$signal]);
+        foreach(self::getWatchers($signal) as $i => $watcher) {
+            unset(self::$watchers[$signal][$i]);
         }
+        unset(self::$watchers[$signal]);
+        self::diasable($signal);
+        self::$sorted = false;
     }
 
     /**
-     * Chek if a signal is registered
+     * Disable signal handler
+     *
+     * @param   $signal
+     * @return  bool
+     */
+    public static function diasable($signal)
+    {
+        return pcntl_signal($signal, SIG_DFL);
+    }
+
+    /**
+     * Check if a signal is registered
      *
      * @param   int $signal
      * @return  bool
      */
     public static function has($signal)
     {
-        return isset(self::$signals[$signal]);
+        return isset(self::$watchers[$signal]);
     }
 
     /**
@@ -77,18 +110,16 @@ class SignalDispatcher implements \Countable
     }
 
     /**
-     * set stack of signals
+     * set stack of watchers
      *
-     * @param array $signals
+     * @param array $watchers
      */
-    public static function set(array $signals)
+    public static function set(array $watchers)
     {
         self::clear();
 
-        foreach ($signals as $signal => $watchers) {
-            foreach ($watchers as $watcher) {
-                self::add($signal, $watcher);
-            }
+        foreach ($watchers as $watcher) {
+            self::add($watcher);
         }
     }
 
@@ -107,9 +138,10 @@ class SignalDispatcher implements \Countable
      */
     public static function call($signal)
     {
-        /** @var SignalWatcher $watcher */
-        foreach (self::$signals[$signal] as $watcher) {
-            $watcher->execute($signal);
+        foreach (self::getWatchers($signal) as $watcher) {
+            if ($watcher->valid($signal)) {
+                $watcher->execute();
+            }
         }
     }
 
@@ -118,12 +150,10 @@ class SignalDispatcher implements \Countable
      */
     public function count()
     {
-        $c = 0;
-
-        foreach (self::$signals as $watchers) {
-            $c += count($watchers);
+        $count = 0;
+        foreach (self::$watchers as $signal => $watchers) {
+            $count += count($watchers);
         }
-
-        return $c;
+        return $count ;
     }
 }

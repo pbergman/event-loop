@@ -21,8 +21,8 @@ class SignalDispatcherTest extends \PHPUnit_Framework_TestCase
         $ret = 0;
         $dispatcher = new SignalDispatcher();
         $dispatcher::clear();
-        new SignalWatcher(SIGUSR1, function() use(&$ret) { $ret++; });
-        new SignalWatcher(SIGUSR2, function() use(&$ret) { $ret++; });
+        new SignalWatcher(SIGUSR1, 0, function() use(&$ret) { $ret++; });
+        new SignalWatcher(SIGUSR2, 0, function() use(&$ret) { $ret++; });
         $this->assertTrue($dispatcher::has(SIGUSR1));
         $this->assertTrue($dispatcher::has(SIGUSR2));
         $dispatcher::ignore(SIGUSR1);
@@ -42,12 +42,12 @@ class SignalDispatcherTest extends \PHPUnit_Framework_TestCase
 
         $dispatcher = new SignalDispatcher();
         $dispatcher::clear();
-        new SignalWatcher(SIGCHLD, function() use(&$ret) { $ret++; });
-        new SignalWatcher(SIGCHLD, function() use(&$ret) { $ret++; });
+        new SignalWatcher(SIGCHLD, 0, function() use(&$ret) { $ret++; });
+        new SignalWatcher(SIGCHLD, 0, function() use(&$ret) { $ret++; });
         $this->assertTrue($dispatcher::has(SIGCHLD));
         $this->assertSame(2, count($dispatcher));
         $dispatcher::set([
-            SIGCHLD => [new SignalWatcher(SIGCHLD, function() use(&$ret) { $ret++; })]
+            new SignalWatcher(SIGCHLD, 0, function() use(&$ret) { $ret++; })
         ]);
         $this->assertSame(1, count($dispatcher));
     }
